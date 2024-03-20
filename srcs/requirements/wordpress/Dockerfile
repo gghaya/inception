@@ -7,11 +7,12 @@ RUN apt-get update && \
 RUN wget https://wordpress.org/latest.tar.gz && \
     tar -xvzf latest.tar.gz
 
+COPY wordpress/* /var/www/html/wordpress
 # Ensure proper permissions
-RUN chown -R www-data:www-data /var/www/html
+RUN chown -R www-data:www-data /var/www/html/wordpress
 
 # Copy the custom wp-config.php to the correct location
-COPY tools/wp-config.php /var/www/html/wp-config.php
+COPY tools/wp-config.php /var/www/html/wordpress/wp-config.php
 
 # Expose port 9000 for php-fpm
 EXPOSE 9000
