@@ -3,21 +3,22 @@ services:
   nginxservice:
     build: 
       context: ./requirements/nginx/
+      dockerfile: Dockerfile
     container_name: nginx_c
     restart: always
     ports: 
       - 443:443
     # depends_on:
     #   - wordpress_app
-  # mariadbservice:
-  #   build: 
-  #       context: ./requirements/mariadb/
-  #   container_name: mariadb_c
-  #   env_file: 
-  #     - ./.env
-  #   volumes:
-  #     - ./requirements/mariadb/tools/mariadb-database-volume:/var/lib/mysql
-  #     - ./requirements/mariadb/conf:/etc/mysql/conf.d 
+  mariadbservice:
+    build: 
+        context: ./requirements/mariadb/
+    container_name: mariadb_c
+    env_file: 
+      - ./.env
+    volumes:
+      - ./requirements/mariadb/tools/mariadb-database-volume:/var/lib/mysql
+      - ./requirements/mariadb/conf:/etc/mysql/conf.d 
   # wordpress_app:
   #   build: 
   #     context: ./requirements/wordpress/
