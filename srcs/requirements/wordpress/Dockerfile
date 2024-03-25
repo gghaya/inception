@@ -5,7 +5,7 @@ RUN wget https://wordpress.org/latest.tar.gz -O wordpress.tar.gz && \
     mkdir wordpress && \
     tar -xzf wordpress.tar.gz -C wordpress --strip-components=1 && \
     rm wordpress.tar.gz
-COPY tools/.env /usr/local/bin/
+# COPY tools/.env /usr/local/bin/
 COPY tools/script.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/script.sh
 RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar

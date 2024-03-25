@@ -1,6 +1,6 @@
 #!/bin/bash
 sleep 12
-source /usr/local/bin/.env
+# source /usr/local/bin/.env
 mkdir -p /var/www/html
 chown -R www-data:www-data /var/www/html
 chown -R www-data:www-data wordpress
