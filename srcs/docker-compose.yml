@@ -1,37 +1,41 @@
 version: '3.8'
 services:
-  nginxservice:
+  nginx:
     build: 
       context: ./requirements/nginx/
       dockerfile: Dockerfile
-    container_name: nginx_c
+    container_name: nginx
     restart: always
     ports: 
       - 443:443
-    # depends_on:
-    #   - wordpress_app
-  mariadbservice:
+    volumes:
+      - ./requirements/wordpress/tools/wordpress_data:/var/www/html/wordpress
+    depends_on:
+      - wordpress
+  mariadb:
     build: 
         context: ./requirements/mariadb/
-    container_name: mariadb_c
+    container_name: mariadb
     env_file: 
       - ./.env
+    restart: always
+    ports: 
+      - 3306:3306
     volumes:
-      - ./requirements/mariadb/tools/mariadb-database-volume:/var/lib/mysql
-      - ./requirements/mariadb/conf:/etc/mysql/conf.d 
-  # wordpress_app:
-  #   build: 
-  #     context: ./requirements/wordpress/
-  #   container_name: wordpress_c
-  #   volumes:
-  #     - ./requirements/wordpress/tools/wordpress_data:/var/www/html
-  #   env_file: 
-  #     - ./.env
-  #   restart: always
-  #   ports:
-  #     - 5000:5000
-  #   depends_on:
-  #       - mariadbservice
+      - mariadb_data:/var/lib/mysql
+  wordpress:
+    build: 
+      context: ./requirements/wordpress/
+    container_name: wordpress
+    volumes:
+      - ./requirements/wordpress/tools/wordpress_data:/var/www/html/wordpress
+    env_file: 
+      - ./.env
+    restart: always
+    ports:
+      - 9000:9000
+    depends_on:
+        - mariadb
 volumes:
   wordpress_data:
-  mariadb-database-volume:
+  mariadb_data:

@@ -1,21 +1,14 @@
 FROM debian:10
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    php-fpm php-mysql php-common php-curl php-gd php-mbstring php-xml php-xmlrpc php-soap php-intl php-zip \
-    wget unzip && \
-    rm -rf /var/lib/apt/lists/*
-RUN wget https://wordpress.org/latest.tar.gz && \
-    tar -xvzf latest.tar.gz
-
-COPY wordpress/* /var/www/html/wordpress
-# Ensure proper permissions
-RUN chown -R www-data:www-data /var/www/html/wordpress
-
-# Copy the custom wp-config.php to the correct location
-COPY tools/wp-config.php /var/www/html/wordpress/wp-config.php
-
-# Expose port 9000 for php-fpm
-EXPOSE 9000
-
-# Start php-fpm in the foreground
-CMD ["php-fpm", "-F"]
+RUN apt-get update
+RUN apt-get install php-cgi php-common php-fpm mariadb-client php-pear php-mbstring php-zip php-net-socket php-gd php-xml-util php-gettext php-mysql php-bcmath tar wget unzip wget git -y
+RUN wget https://wordpress.org/latest.tar.gz -O wordpress.tar.gz && \
+    mkdir wordpress && \
+    tar -xzf wordpress.tar.gz -C wordpress --strip-components=1 && \
+    rm wordpress.tar.gz
+COPY tools/.env /usr/local/bin/
+COPY tools/script.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/script.sh
+RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+RUN chmod +x wp-cli.phar
+RUN mv wp-cli.phar /usr/local/
+ENTRYPOINT ["script.sh"]

@@ -1,0 +1,90 @@
+pipeline {
+    agent any
+    tools {
+        dockerTool 'docker'
+    } 
+    environment {
+        BRANCH_NAME = "${env.ghprbSourceBranch}"
+        REMOTE_HOST = '20.39.232.236'
+        KILL_CREDS = credentials('killer')
+        OOUTPUT = '/tmp/output.txt'
+        ODOO_CONF = 'odoo.conf'
+        TEMPF= 'experio.conf'
+        NUMFAILURES='-1'
+        NUMERRORS='-1'
+        
+        GITHUB_TOKEN = credentials('gh_SSH')
+        REPO_OWNER = "morosoft-solutions"
+        REPO_NAME = "experio-devops"
+        PR_NUMBER = "${ghprbPullId}"
+    }
+    
+    stages {
+        stage('Preparation') {
+          steps {
+            cleanWs()
+            echo "BRANCH_NAME : ${BRANCH_NAME}"
+          }
+        }
+        stage('Clone from PR') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: "${BRANCH_NAME}"]], userRemoteConfigs: [[url: 'git@github.com:morosoft-solutions/experio-devops.git',
+                                credentialsId: 'experio-exp']]])
+            }
+        }  
+                    // stage('Post to GitHub PR') {
+                    //     steps {
+                    //         script {
+                    //             def consoleLog = currentBuild.rawBuild.getLog(100).join("\n") // Gets the last 100 lines of the console log
+                    //             def comment = "```\n${consoleLog}\n```" // Markdown format
+                    //             sh """ echo ${comment}"""
+                    //             def apiUrl = "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/issues/${PR_NUMBER}/comments"
+                    //             sh """
+                    //                 curl -H "Authorization: token ${GITHUB_TOKEN}" \
+                    //                      -H "Accept: application/vnd.github.v3+json" \
+                    //                      -d '{"body": "${comment}"}' \
+                    //                      ${apiUrl}
+                    //             """
+                    //         }
+                    //     }
+                    // }
+        stage('CREATE ODOO.CONF FILE') {
+                steps {
+                    script {
+                        sh 'cp ${TEMPF} ${ODOO_CONF}'
+                        // sh "sed -i 's/db_user = root/db_user = odoo/' ${ODOO_CONF}"
+                        // sh "sed -i 's/db_password = root/db_password = odoo/' ${ODOO_CONF}"
+                        // sh'cat ${ODOO_CONF}'
+                    }
+                }
+        }
+        stage('Build Docker Images') {
+                steps {
+                    script {
+                         echo "BUILD ODOO IMAGE:"
+                        docker.build("experio:${BRANCH_NAME}", '-f docker/odoo/Dockerfile .')
+                        sh 'docker images'
+                    }
+                }
+        }
+        stage('RUN UNIT TESTS') {
+              steps {
+                     script {
+                        // def dockerCommand = "docker run  --link postgres:postgres --rm experio:${BRANCH_NAME} --test-enable -i base --stop-after-init -d ${BRANCH_NAME}"
+                        sh "docker run --rm --link postgres:postgres experio:${BRANCH_NAME} odoo --test-enable --stop-after-init -i base -d \${BRANCH_NAME}"
+                        // sh """${dockerCommand} > ${OOUTPUT} 2>&1"""
+                        // sh 'cat  ${OOUTPUT}'
+                        // NUMFAILURES = sh(script: "grep 'odoo.tests.runner:' ${env.OOUTPUT} | awk '{print \$7}'", returnStdout: true).trim()
+                        // NUMERRORS = sh(script: "grep 'odoo.tests.runner:' ${env.OOUTPUT} | awk '{print \$9}'", returnStdout: true).trim()
+                        // echo "Failures: ${NUMFAILURES}, Errors: ${NUMERRORS}"
+                        // int numFailures = NUMFAILURES.toInteger()
+                        // int numErrors = NUMERRORS.toInteger()
+                        // if (numFailures != 0 || numErrors != 0) {
+                        //     error('Failing the job because there are failures or errors.')
+                        // }
+                    }
+                        
+                }
+            }
+        }
+}
